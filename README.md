@@ -53,81 +53,80 @@ The following variables can be customized in `variables.tf` or through the comma
 - `resource_prefix`: Prefix for resource names (default: "NextWork")
 - `instance_type`: EC2 instance type (default: "t3.micro")
 
-## Outputs
-
-The configuration provides several useful outputs:
-
-- `vpc_id`: ID of the created VPC
-- `public_subnet_id`: ID of the public subnet
-- `private_subnet_id`: ID of the private subnet
-- `public_instance_public_ip`: Public IP of the EC2 instance in public subnet
-- `private_instance_private_ip`: Private IP of the EC2 instance in private subnet
-- `public_security_group_id`: ID of the public security group
-- `private_security_group_id`: ID of the private security group
 
 ## Architecture
 
 ```mermaid
-graph TB
-    %% Define styles
-    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:#232F3E
-    classDef vpc fill:#F58536,stroke:#232F3E,stroke-width:2px,color:white
-    classDef subnet fill:#4391E0,stroke:#232F3E,stroke-width:2px,color:white
-    classDef instance fill:#D86613,stroke:#232F3E,stroke-width:2px,color:white
-    classDef secgroup fill:#7AA116,stroke:#232F3E,stroke-width:2px,color:white
+---
+config:
+  theme: 'neutral'
+---
+graph LR
+  %% Direction
+  %% Left -> Right for a diagram similar to your image
+  %% Bidirectional links show potential two-way traffic paths
 
-    %% Internet Gateway
-    IG[Internet Gateway]
-    
-    %% VPC and Subnets
-    VPC[VPC: 10.0.0.0/16]
-    PublicSubnet[Public Subnet: 10.0.0.0/24]
-    PrivateSubnet[Private Subnet: 10.0.1.0/24]
-    
-    %% EC2 Instances
-    PublicEC2[Public EC2 Instance]
-    PrivateEC2[Private EC2 Instance]
-    
-    %% Security Groups
-    PublicSG[Public Security Group]
-    PrivateSG[Private Security Group]
-    
-    %% Network Connections
-    Internet((Internet))
-    
-    %% Define relationships
-    Internet --> IG
-    IG --> PublicSubnet
-    PublicSubnet --> PublicEC2
-    PublicSubnet --> PrivateSubnet
-    PrivateSubnet --> PrivateEC2
-    
-    %% Security Group connections
-    PublicSG --> PublicEC2
-    PrivateSG --> PrivateEC2
-    
-    %% Group everything in VPC
-    subgraph VPCNetwork[AWS VPC]
-        VPC
-        subgraph PublicResources[Public Resources]
-            PublicSubnet
-            PublicEC2
-            PublicSG
-        end
-        subgraph PrivateResources[Private Resources]
-            PrivateSubnet
-            PrivateEC2
-            PrivateSG
-        end
-        IG
+  client([Client<br/>Users])
+
+  subgraph AWS[AWS Cloud]
+    igw([Internet Gateway])
+    subgraph vpc[VPC]
+      %% Route Tables
+      subgraph rts[Route Tables]
+        prt[[Private Route Table<br/>172.16.0.0<br/>172.16.1.0<br/>172.16.2.0]]
+        pubrt[[Public Route Table<br/>172.16.0.0<br/>172.16.1.0<br/>172.16.2.0]]
+      end
+
+      %% Network ACLs
+      pnacl((Private Network ACL))
+      pubnacl((Public Network ACL))
+
+      %% Subnets
+      subgraph privsub[Private Subnet]
+        psg[/"Private Security Group"/]
+        pserver[[Private Server]]
+      end
+
+      subgraph pubsub[Public Subnet]
+        usg[/"Public Security Group"/]
+        userver[[Public Server]]
+      end
     end
-    
-    %% Apply styles
-    class IG aws
-    class VPC vpc
-    class PublicSubnet,PrivateSubnet subnet
-    class PublicEC2,PrivateEC2 instance
-    class PublicSG,PrivateSG secgroup
+  end
+
+  %% Connectivity (external)
+  client <--> igw
+  igw <--> pubrt
+
+  %% Public path
+  pubrt <--> pubnacl
+  pubnacl <--> pubsub
+  usg --- userver
+
+  %% Private path
+  prt <--> pnacl
+  pnacl <--> privsub
+  psg --- pserver
+
+  %% Intra-VPC communication (public -> private allowed by SG rules)
+  userver <--> pserver
+
+  %% Styling
+  classDef rt fill:#eef7ff,stroke:#4a90e2,stroke
+  classDef acl fill:#f3eaff,stroke:#8a63d2,stroke-width:1px,stroke-
+  classDef subnet fill:#eaffea,stroke:#3aa655,stroke
+  classDef sg fill:#fff2e5,stroke:#d97a2b,stroke-width:1px,stroke-
+  classDef server fill:#fff,stroke:#b35c00,stroke-width
+  classDef infra fill:#fff,stroke:#999,stroke
+  classDef ext fill:#f9f9f9,stroke:#666,stroke-width
+
+  class prt,pubrt rt
+  class pnacl,pubnacl acl
+  class privsub,pubsub subnet
+  class psg,usg sg
+  class pserver,userver server
+  class igw infra
+  class client ext
 ```
 
 ## Security
@@ -158,5 +157,4 @@ terraform destroy
 ├── README.md          # This documentation
 ├── main.tf           # Main Terraform configuration
 ├── variables.tf      # Variable definitions
-└── output.tf         # Output definitions
 ```
