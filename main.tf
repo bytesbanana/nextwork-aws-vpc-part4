@@ -64,3 +64,29 @@ resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4_from_anywhere" {
   from_port         = 80
   to_port           = 80
 }
+
+resource "aws_default_network_acl" "nextwork_public_subnet_1" {
+  default_network_acl_id = aws_vpc.nextwork_vpc.default_network_acl_id
+
+  ingress {
+    protocol   = -1
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  egress {
+    protocol   = -1
+    rule_no    = 100
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 0
+    to_port    = 0
+  }
+
+  tags = {
+    Name = "NextWork Network ACL"
+  }
+}
