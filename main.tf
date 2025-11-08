@@ -122,12 +122,12 @@ resource "aws_network_acl" "nextwork_private_subnet_NACL" {
   }
 }
 
-data "aws_ami" "ubuntu" {
+data "aws_ami" "amazon_linux_2" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["al2023-ami-2023.9.20251105.0-kernel-6.1-x86_64"]
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 
   filter {
@@ -144,7 +144,7 @@ resource "aws_key_pair" "ec2_key_pair" {
 }
 
 resource "aws_instance" "nextwork_public_server" {
-  ami                         = data.aws_ami.ubuntu.id
+  ami                         = data.aws_ami.amazon_linux_2.id
   instance_type               = "t3.micro"
   key_name                    = aws_key_pair.ec2_key_pair.key_name
   vpc_security_group_ids      = [aws_security_group.nextwork_public_security_group.id]
