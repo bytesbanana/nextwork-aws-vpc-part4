@@ -19,3 +19,11 @@ resource "aws_subnet" "nextwork-public-subnet-1" {
     Name : "Public 1"
   }
 }
+
+resource "aws_internet_gateway" "nextwork-ig" {
+  vpc_id = aws_vpc.nextwork-vpc.id
+  
+  tags = {
+    Name : "NextWork IG"
+  }
+}
